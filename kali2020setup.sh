@@ -161,10 +161,10 @@ fi
 #   If you have some tools that have your own passwords or privately obfuscated tools, then I use
 #       a local file share to upload them into kali. This can be replaced with in internet facing private cloud, etc...
 #   It is preferable to load tools directly from the source so you're always getting the latest updated tool.
-(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Mounting host OS share onto /mnt/host..." 1>&2
-mkdir /mnt/host 1>&2 
-mount -t cifs //192.168.1.99/Shared /mnt/host 1>&2 
-chmod -R 777 /mnt/host
+(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Mounting host OS share onto /mnt/hgfs..." 1>&2
+mkdir /mnt/hgfs 1>&2 
+mount -t cifs //192.168.1.99/Shared /mnt/hgfs 1>&2 
+chmod -R 777 /mnt/hgfs
 
 
 ##### Making my own preset directories for my preset tools to be downloaded later ( and ssh keys )
@@ -209,12 +209,12 @@ fi
 ##### Downloading my preset tools, lists, and wallpapers from the host OS share  
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Downloading local tools from localshare and internet..." 1>&2
 
-cp -r/mnt/host/lists/* /home/kali/lists
-cp -r /mnt/host/shells/* /home/kali/shells
-cp -r /mnt/host/wallpapers/* /home/kali/Pictures/Wallpapers 
+cp -r/mnt/hgfs/lists/* /home/kali/lists
+cp -r /mnt/hgfs/shells/* /home/kali/shells
+cp -r /mnt/hgfs/wallpapers/* /home/kali/Pictures/Wallpapers 
 
-cp -r /mnt/host/linuxtools/* /home/kali/linuxtools
-cp -r /mnt/host/toolslinuxall/* /home/kali/toolslinuxall 
+cp -r /mnt/hgfs/linuxtools/* /home/kali/linuxtools
+cp -r /mnt/hgfs/toolslinuxall/* /home/kali/toolslinuxall 
 cd /home/kali/linuxtools
 wget https://github.com/StuckInTheStack/Kali2020Setup/aliases    # copies over my aliases that I use on kali and linux hosts
 wget https://raw.githubusercontent.com/diego-treitos/linux-smart-enumeration/master/lse.sh
@@ -224,8 +224,8 @@ wget https://github.com/DominicBreuker/pspy/releases/download/v1.2.0/pspy32s
 wget https://github.com/DominicBreuker/pspy/releases/download/v1.2.0/pspy64s 
 chmod +x *
 
-cp -r /mnt/host/wintools/* /home/kali/wintools
-cp -r /mnt/host/toolswinall/* /home/kali/toolswinall
+cp -r /mnt/hgfs/wintools/* /home/kali/wintools
+cp -r /mnt/hgfs/toolswinall/* /home/kali/toolswinall
 cd /home/kali/wintools/
 wget "https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite/blob/master/winPEAS/winPEASexe/winPEAS/bin/Obfuscated%20Releases/winPEASany.exe" 1>&2
 wget https://github.com/carlospolop/winPE/tree/master/binaries/watson/WatsonNet3.5AnyCPU.exe 
@@ -238,7 +238,7 @@ wget https://github.com/r3motecontrol/Ghostpack-CompiledBinaries/blob/master/Sha
 ##### Downloading my aliases and scripts from the host OS share then adding aliases from this script
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Downloading tools from localshare then adding aliases from this script..." 1>&2
 file=/home/kali/.bash_aliases; [ -e "${file}" ] && cp -n $file{,.bkup}   #/etc/bash.bash_aliases
-cp -r /mnt/host/.scripts/* /home/kali/.local/bin                         #copies my custom scripts to .local/bin to be in PATH
+cp -r /mnt/hgfs/.scripts/* /home/kali/.local/bin                         #copies my custom scripts to .local/bin to be in PATH
 export PATH=/home/kali/.local/bin:$PATH 
 
 
@@ -1223,7 +1223,7 @@ done
 ##### Changing kali to owner and lax permissions to all files in /home/kali and subdirectories
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Changing owner to kali and lax permissions for all tools in /home/kali" 1>&2
 chown -R kali:kali /home/kali
-chmod -R 777 /mnt/host
+chmod -R 777 /mnt/hgfs
 
 
 ##### Time taken
