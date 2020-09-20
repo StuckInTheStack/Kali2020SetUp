@@ -20,18 +20,18 @@
 I download some wallpapers I prefer.  Feel free to use the tools in the repository here, but customize the script and folders to your taste.  
 The script will add about 25GB to your installation ( 10Gb with the -noteverything argument). It checks for enough disk space beforehand so it doesn't crash hard.</p>
 <p></p>
-<p>Use from root shell with  <strong>./kali2020setup.sh -noteverything -keepdirs</strong>  ( at the start, you will need to enter a password or -enter- to access your host share )<br>
+<p>Use from root shell with  <strong>./kali2020setup.sh -noteverything -keepdirs</strong>  ( at the start, you will need to enter a password or {enter} to access your host share )<br>
   Possile Command line arguments:  <br>
     <strong>-noteverything</strong> = Prevents default action of loading every Kali package ( Script will only use about 10Gb instead of 25Gb )<br>
     <strong>-keepdirs</strong> = Stops deletion of the Public,Videos,Templates, and Music  <br>
     <strong>-burp</strong>     = Deletes Burpsuite community (for Pro users)  <br>
     <strong>-dns</strong>      = Use OpenDNS and locks permissions  <br>
     <strong>-osx</strong>      = Changes to Apple keyboard layout  <br>
-    <strong>-keyboard \<value\></strong> = Change the keyboard layout language  ( default is US )  <br>
-    <strong>-timezone \<value\></strong> = Change the timezone location ( default is set by geolocation )  <br>
+    <strong>-keyboard {value}</strong> = Change the keyboard layout language  ( default is US )  <br>
+    <strong>-timezone {value}</strong> = Change the timezone location ( default is set by geolocation )  <br>
 <p></p>
 <p></p>
-<p>This script is built on scripts from   https://github.com/g0tmi1k/os-scripts  https://github.com/blacklanternsecurity</p>
+<p>This script relied heavily on scripts from  https://github.com/g0tmi1k/os-scripts and https://github.com/blacklanternsecurity</p>
 <p></p>
 Cheers,  <br>
 StuckInTheStack  <br>
