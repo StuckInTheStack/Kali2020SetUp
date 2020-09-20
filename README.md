@@ -2,8 +2,8 @@
 
 <p>This collection of files is part of my setup script to customize a new Kali install (2020.3).  I normally run kali in a virtual machine so I transfer most of my tools from a host share.  This script deletes the Templates, Videos, Public, and Music directories by default.  It also creates directories in /home/kali/ that I use for easy access to my tools, lists, and shells as shown below.</p>
 <p></p>
-<p>   /wintools      =privilege escalation tools I would always upload to a compromised windows host</p>
-<p>   /linuxtools    =privilege escalation tools I would always upload to a compromised linux host</p>
+>   /wintools      =privilege escalation tools I would always upload to a compromised windows host
+>   /linuxtools    =privilege escalation tools I would always upload to a compromised linux host
 <p>   /toolslinuxall =linux tools I use, but don't want to upload every time</p>
 <p>   /toolswinall   =windows tools I use, but don't want to upload every time</p>
 <p>   /.local/bin    =scripts and binaries I want to incude on PATH</p>
