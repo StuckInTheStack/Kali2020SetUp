@@ -16,7 +16,7 @@
 I download some wallpapers I prefer.  Feel free to use the tools in the repository here, but customize the script and folders to your taste.  
 The script will add about 10-12GB to your installation. It checks for enough disk space beforehand so it doesn't crash hard.</p>
 <p></p>
-<p>Use from root shell with  <strong>./kali2020setup.sh</strong>  <br>
+<p>Use from root shell with  <strong>./kali2020setup.sh</strong>  ( at the start, you will need to enter a password or blank to access your host share ) <br>
   Possile Command line arguments:  <br>
     -burp     = Deletes Burpsuite community (for Pro users)  <br>
     -keepdirs = Stops deletion of the Public,Videos,Templates, and Music  <br>
