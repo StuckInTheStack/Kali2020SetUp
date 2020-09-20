@@ -27,8 +27,8 @@ The script will add about 25GB to your installation ( 10Gb with the -noteverythi
     <strong>-burp</strong>     = Deletes Burpsuite community (for Pro users)  <br>
     <strong>-dns</strong>      = Use OpenDNS and locks permissions  <br>
     <strong>-osx</strong>      = Changes to Apple keyboard layout  <br>
-    <strong>-keyboard <value></strong> = Change the keyboard layout language  ( default is US )  <br>
-    <strong>-timezone <value></strong> = Change the timezone location ( default is set by geolocation )  <br>
+    <strong>-keyboard \<value\></strong> = Change the keyboard layout language  ( default is US )  <br>
+    <strong>-timezone \<value\></strong> = Change the timezone location ( default is set by geolocation )  <br>
 <p></p>
 <p></p>
 <p>This script is built on scripts from   https://github.com/g0tmi1k/os-scripts  https://github.com/blacklanternsecurity</p>
