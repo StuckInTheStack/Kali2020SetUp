@@ -1,0 +1,151 @@
+### ALIASES LOADED
+# used to have one file for all my aliases and functions,   called by .bashrc which is called by .profile
+
+
+alias ls='ls --color=always'
+alias dir='dir --color=always'
+alias grep='grep --color=always'
+alias nmap="nmap --reason --open --stats-every 3m --max-retries 1 --max-scan-delay 20 --defeat-rst-ratelimit "
+alias  cclip='xclip -selection clipboard '      # defaults xclip to use <ctrl> c,v,x 
+alias ll="ls -l --block-size=1 --color=always "
+alias la="ls -altrh --color=always "
+alias mp="mousepad "
+
+alias sp="searchsploit "
+alias spm="searchsploit -m "
+alias spx="searchsploit -x "
+alias listen="netstat -antp | grep LISTEN "
+alias ports="netstat -tulanp "
+alias ftproot="cd /var/ftp/ "
+alias webroot="cd /var/www/html "
+alias smbroot="cd /var/samba "
+function mcd () { mkdir -p $1; cd $1;}
+function me () { chmod +x $1;}
+
+alias  httpup='python -m SimpleHTTPServer '   # quick http server
+alias  ftpup='python3 -m pyftpdlib -w -p '         # quick ftp server 
+alias  smbup='python /opt/impacket/examples/smbserver.py -smb2support ' # quick smb share needs <name> and <path> after
+
+function rg() {
+if [ -z $1 ]; then 
+echo "Bash script to recursively search from the current directory for given search term in all files."
+echo "Use with:  rg <term> [term, term, ...]";    
+return 1  
+fi
+search=""
+for string in "$@" 
+do
+  if [ -z $search ]; then 
+    search=$string;    
+  else
+    search=$search" | "$string;
+  fi
+done
+grep -R -n -i $search . 2>/dev/null;
+}
+
+function ge()
+{
+#  This function calls firefox to search with google.com for exploit + whatever arguments given
+#  Use with:  ge [service] [version] [github|anyotherterm]
+    local s="$_"
+    local query=
+
+    case "$1" in
+        '')   ;;
+        *)    s="$*"; query="search?q=exploit+${s//[[:space:]]/+}" ;;
+    esac
+    firefox "http://www.google.com/${query}"
+}
+
+function showweb() 
+{
+if [ -z "$1" ]; then 
+echo "Usage is: showweb <IPorwebsite>"
+echo "Puts new tabs into last touched firefox instance, only 1 argument allowed"
+return 1
+fi
+
+firefox http://"$1" &
+sleep .1
+firefox --new-tab view-source:http://"$1" &
+sleep .1
+firefox --new-tab https://"$1" &
+sleep .1
+firefox --new-tab view-source:https://"$1" &
+}
+
+#function bustweb ()   # not functional, retry with plain shell rather than terminator
+#{
+#if [ -z "$1" ]; then 
+#echo "Usage is: bustweb <IPorwebsite>"
+#echo "Puts new tabs into last touched firefox instance, only 1 argument allowed"
+#return 1
+#fi
+#
+#terminator --new-tab
+#gobuster -e -u "$1" -w ~/lists/medium.txt -x php,aspx,html,txt,jsp,bak,orig,conf,xml -o gobustmediumfiles.txt -t 20 -k
+#terminator --new-tab
+#dirb "$1" /root/lists/lowersmall.txt -w 
+#terminator --new-tab
+#dirbuster -u  http://10.10.10./ -l /root/lists/common.txt -e php, html, aspx, conf, orig, bak -g 
+#echo "Remember to click \"Start\" in DirBuster !"
+#}
+
+function cool() {
+if [ -z "$1" ]; then 
+echo "Bash script to search a given site, cewl to level set by second argument and mutate with john."
+echo "Output is stored in cool.lst file."
+echo "Use with:  cool <website/IPaddr> [depth:1]"    
+return 1
+fi
+
+if [ -z $2 ]
+then 
+  cewl $1 -d 3 -m 3 -w cool.tmp0 -a --with-numbers
+else
+  cewl $1 -d $2 -m 3 -w cool.tmp0 -a --with-numbers
+fi
+
+cat cool.tmp0 | sort -u > cool.tmp1
+john --wordlist=cool.tmp1 --rules --stdout > cool.lst  
+
+rm cool.tmp0 
+rm cool.tmp1
+}
+
+function extract {
+ if [ -z "$1" ]; then
+    # display usage if no parameters given
+    echo "Usage: extract <path/file_name>.<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"
+    echo "       extract <path/file_name_1.ext> [path/file_name_2.ext] [path/file_name_3.ext]"
+    return 1
+ else
+    for n in $@
+    do
+      if [ -f "$n" ] ; then
+          case "${n%,}" in
+            *.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar) 
+                         tar xvf "$n"       ;;
+            *.lzma)      unlzma ./"$n"      ;;
+            *.bz2)       bunzip2 ./"$n"     ;;
+            *.rar)       unrar x -ad ./"$n" ;;
+            *.gz)        gunzip ./"$n"      ;;
+            *.zip)       unzip ./"$n"       ;;
+            *.z)         uncompress ./"$n"  ;;
+            *.7z|*.arj|*.cab|*.chm|*.deb|*.dmg|*.iso|*.lzh|*.msi|*.rpm|*.udf|*.wim|*.xar)
+                         7z x ./"$n"        ;;
+            *.xz)        unxz ./"$n"        ;;
+            *.exe)       cabextract ./"$n"  ;;
+            *)
+                         echo "extract: '$n' - unknown archive method"
+                         return 1
+                         ;;
+          esac
+      else
+          echo "'$n' - file does not exist"
+          return 1
+      fi
+    done
+fi
+}
