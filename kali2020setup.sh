@@ -22,7 +22,7 @@
 #  1. Run as root after a clean install of Kali Linux.        #
 #     *  Create a clone or snapshot prior to any changes.     #
 #                             ---                             #
-#  2. You will need 25GB+ free HDD space before running.      #
+#  2. You will need 10-12GB+ free HDD space before running.   #
 #                             ---                             #
 #  3. Command line arguments:                                 #
 #      -burp     = Deletes Burpsuite community (for Pro users)#
@@ -147,9 +147,9 @@ else
 fi
 
 
-##### Checking if there is at least 20Mb of space availale on the disk, feel free to change the limit if your modifications use less.
-if [[  $(df | grep /dev/s  | head -n 1 | tr -s [:space:] " " | cut -d " " -f 4) -lt "20000000" ]]; then
-  echo -e ' '${RED}'[!]'${RESET}" There may not be enough space available on the disk to install everything. Need 20Mb usually." 1>&2
+##### Checking if there is at least 10Mb of space availale on the disk, feel free to change the limit if your modifications use less.
+if [[  $(df | grep /dev/s  | head -n 1 | tr -s [:space:] " " | cut -d " " -f 4) -lt "10000000" ]]; then
+  echo -e ' '${RED}'[!]'${RESET}" There may not be enough space available on the disk to install everything. Need 10-12Mb usually." 1>&2
   echo -e ' '${RED}'[!]'${RESET}" Quitting..." 1>&2
   exit 1
 else
