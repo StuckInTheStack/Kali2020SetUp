@@ -1,48 +1,44 @@
 #!/bin/bash
-#-METADATA----------------------------------------------------#
-#  Filename: .stuck-setup.sh            (Update: 9/15/2020)   #
-#-INFO--------------------------------------------------------#
-#  Post-installation script for Kali Linux                    #
-#                                                             #
-#-AUTHOR(S)---------------------------------------------------#
-#  Creator   : stuck ~ https://stuckinthestack.github.io/     #
-#  This script is an adaptation that heavily relied on prior  #
-#  scripts by:                                                #
-#         g0tmilk ~ https://blog.g0tmi1k.com/                 #
-#         drkpasngr ~ https://drkpasngr.github.io/            #
-#                                                             #
-#-TARGET OPERATING SYSTEM-------------------------------------#
-#  Designed for: Kali Linux Rolling 2020.3 [x64] (VMWare)     #
-#  Tested on   : Kali Linux Rolling 2020.3 [x64] (VMWare)     #
-#                                                             #
-#-LICENSE-----------------------------------------------------#
-#  MIT License ~ http://opensource.org/licenses/MIT           #
-#                                                             #
-#-INSTRUCTIONS------------------------------------------------#
-#  1. Run as root after a clean install of Kali Linux.        #
-#     *  Create a clone or snapshot prior to any changes.     #
-#                             ---                             #
-#  2. You will need 10-12GB+ free HDD space before running.   #
-#                             ---                             #
-#  3. Command line arguments:                                 #
-#      -burp     = Deletes Burpsuite community (for Pro users)#
-#      -keepdirs = Stops deletion of the Public,Videos,       #
-#                                            ... directories  #
-#      -dns      = Use OpenDNS and locks permissions          #
-#      -osx      = Changes to Apple keyboard layout           #
-#    -keyboard <value> = Change the keyboard layout language  #
-#    -timezone <value> = Change the timezone location         #
-#                                   "US/Pacific"              #
-#  4. This script changes the default home folder             #
-#     configurations. If you don't want this, modify after    #
-#     line 170 to suit your needs.                            #
-#                             ---                             #
-#  Use with# ./stuck-setup.sh -burp -keepdirs -dns            #
-#                                                             #
-#-DISCLAIMER--------------------------------------------------#
-#  ** This script configures Kali How I like it. **           #
-#  ** Please edit it and make it your own. **                 #
-#-------------------------------------------------------------#
+#-METADATA------------------------------------------------------------------#
+#  Filename: .kali2020setup.sh            (Update: 9/15/2020)               #
+#-INFO----------------------------------------------------------------------#
+#  Post-installation script for Kali Linux                                  #
+#                                                                           #
+#-AUTHOR(S)-----------------------------------------------------------------#
+#  Creator   : StuckInTheStack ~ https://github.com/StuckInTheStack         #
+#  This script is an adaptation that heavily relied on prior scripts by:    #
+#         g0tmilk ~ https://blog.g0tmi1k.com/                               #
+#         drkpasngr ~ https://drkpasngr.github.io/                          #
+#                                                                           #
+#-TARGET OPERATING SYSTEM---------------------------------------------------#
+#  Designed for: Kali Linux Rolling 2020.3 [x64] (VMWare)                   #
+#  Tested on   : Kali Linux Rolling 2020.3 [x64] (VMWare)                   #
+#                                                                           #
+#-LICENSE-------------------------------------------------------------------#
+#  MIT License ~ http://opensource.org/licenses/MIT                         #
+#                                                                           #
+#-INSTRUCTIONS--------------------------------------------------------------#
+#  1. Run as root after a clean install of Kali Linux.                      #
+#     *  Create a clone or snapshot prior to any changes.                   #
+#                             ---                                           #
+#  2. You will need 25GB  free HDD space before running.                    #
+#                  (10GB if -noteverything passed as argument)              #
+#  3. Command line arguments:                                               #
+#      -burp     = Deletes Burpsuite community (for Pro users)              #
+#      -noteverything =Does not load every kali package(saves15Gb)          #
+#      -keepdirs = Stops deletion of the Public,Videos,Templates,and Music  #
+#      -dns      = Use OpenDNS and locks permissions                        #
+#      -osx      = Changes to Apple keyboard layout                         #
+#    -keyboard <value> = Change the keyboard layout language (default US )  #
+#    -timezone <value> = Change the timezone location (default geolocated)  #
+#                                   "US/Pacific"                            #
+#                             ---                                           #
+#  Use with# ./kali2020setup.sh -burp -keepdirs -dns -noteverything         #
+#                                                                           #
+#-DISCLAIMER----------------------------------------------------------------#
+#  ** This script configures Kali How I like it. **                         #
+#  ** Please edit it and make it your own. **                               #
+#---------------------------------------------------------------------------#
 
 
 #-Defaults-------------------------------------------------------------#
@@ -61,7 +57,8 @@ timezone=""                 # Set timezone location                             
 ##### Optional steps
 hardenDNS=false       # Set static & lock DNS name server                               [ --dns ]
 DelBurp=false         # Will delete Burp Community from the host ( for Burp Pro users ) [ -burp ]
-KeepDirs=false        # Prevent deletion of Public,Videos,Templates,Music directories   [ -keepdirs ]        
+KeepDirs=false        # Prevent deletion of Public,Videos,Templates,Music directories   [ -keepdirs ]   
+NotEverything=false   # Prevent loading of all the available tools                      [ -noteverything ]
 
 
 ##### (Optional) Enable debug mode?
@@ -99,6 +96,9 @@ while [[ "${#}" -gt 0 && ."${1}" == .-* ]]; do
 
     -burp|--burp )
       DelBurp=true;;
+
+    -noteverything|--noteverything )
+      NotEverything=true;;
 
     -keepdirs|--keepdirs )
       KeepDirs=true;;
@@ -148,12 +148,17 @@ fi
 
 
 ##### Checking if there is at least 10Mb of space availale on the disk, feel free to change the limit if your modifications use less.
-if [[  $(df | grep /dev/s  | head -n 1 | tr -s [:space:] " " | cut -d " " -f 4) -lt "10000000" ]]; then
-  echo -e ' '${RED}'[!]'${RESET}" There may not be enough space available on the disk to install everything. Need 10-12Mb usually." 1>&2
-  echo -e ' '${RED}'[!]'${RESET}" Quitting..." 1>&2
+if [[ "${NotEverything}" = "true" ]] ; then
+DiskNeeded="10000000";
+else
+DiskNeeded="25000000";
+fi
+if [[  $(df | grep /dev/s  | head -n 1 | tr -s [:space:] " " | cut -d " " -f 4) -lt "${DiskNeeded}" ]]; then
+  echo -e ' '${RED}'[!]'${RESET}" There may not 25Gb space available on the disk to install kali-linux-everything. Still need 10Mb with the -noteverything argument."
+  echo -e ' '${RED}'[!]'${RESET}" Quitting..."
   exit 1
 else
-  echo -e " ${GREEN}[i]${RESET} You have at least 20Mb of available space on the disk..."
+  echo -e " ${GREEN}[i]${RESET} You have at least 25Gb default (or 10Gb with -noteverything) of available space on the disk..."
 fi
 
 
@@ -161,8 +166,8 @@ fi
 #   If you have some tools that have your own passwords or privately obfuscated tools, then I use
 #       a local file share to upload them into kali. This can be replaced with in internet facing private cloud, etc...
 #   It is preferable to load tools directly from the source so you're always getting the latest updated tool.
-(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Mounting host OS share onto /mnt/hgfs..." 1>&2
-mkdir /mnt/hgfs 1>&2 
+(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Mounting host OS share onto /mnt/hgfs..."
+mkdir /mnt/hgfs 2>/dev/null 
 mount -t cifs //192.168.1.99/Shared /mnt/hgfs 1>&2 
 chmod -R 777 /mnt/hgfs
 
@@ -381,9 +386,9 @@ source /home/kali/.bash_aliases
 ##### Setting wallpaper  
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Setting wallpaper..."
 cd /home/kali/Pictures/Wallpaper
-wget https://github.com/StuckInTheStack/Kali2020Setup/darkweavekali.jpg
-wget https://github.com/StuckInTheStack/Kali2020Setup/darkwin10.jpg
-wget https://github.com/StuckInTheStack/Kali2020Setup/darkwoodkaliRitter.jpg
+wget https://raw.githubusercontent.com/StuckInTheStack/Kali2020SetUp/master/darkweavekali.jpg
+wget https://raw.githubusercontent.com/StuckInTheStack/Kali2020SetUp/master/darkwin10.jpg
+wget https://raw.githubusercontent.com/StuckInTheStack/Kali2020SetUp/master/darkwwoodkaliRitter.jpg
 xfconf-query --channel xfce4-desktop --property /backdrop/screen0/monitor0/image-path --set /home/kali/Pictures/Wallpaper/darkwoodkaliRitter.jpg 2>/dev/null
 
 
@@ -617,8 +622,13 @@ fi
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}kali-linux-everything${RESET} meta-package"
 echo -e " ${YELLOW}[i]${RESET}  ...this ${BOLD}may take a while${RESET} depending on your Kali version (e.g. ARM, light, mini or docker...)"
 #--- Kali's default tools ~ https://www.kali.org/news/kali-linux-metapackages/
-apt -y -qq install kali-linux-everything 1>&2  \
-  || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
+if [[ "${NotEverything}" = "true" ]] ; then
+apt -y -qq install kali-linux-default \
+  || echo -e ' '${RED}'[!] Issue with apt install'${RESET};
+else
+apt -y -qq install kali-linux-everything  \
+  || echo -e ' '${RED}'[!] Issue with apt install'${RESET};
+fi
 
 
 ##### Configure GRUB
@@ -950,14 +960,10 @@ grep -q '^"PATH"=.*C:\\\\MinGW\\\\bin' ~/.wine/system.reg \
 
 ##### Downloading PsExec.exe
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Downloading ${GREEN}PsExec.exe${RESET} ~ Pass The Hash 'phun'"
-apt -y -qq install windows-binaries  1>&2 \
-  || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
-echo -n '[1/2]'; timeout 300 curl --no-progress-meter -k -L -f "https://download.sysinternals.com/files/PSTools.zip" > /tmp/pstools.zip \
-  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading pstools.zip" 1>&2
-echo -n '[2/2]'; timeout 300 curl --no-progress-meter -k -L -f "http://www.coresecurity.com/system/files/pshtoolkit_v1.4.rar" > /tmp/pshtoolkit.rar \
-  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading pshtoolkit.rar" 1>&2  #***!!! hardcoded path!
-unzip -q -o -d /usr/share/windows-binaries/pstools/ /tmp/pstools.zip
-unrar x -y /tmp/pshtoolkit.rar /usr/share/windows-binaries/ >/dev/null
+apt -y -qq install windows-binaries 1>&2
+cp /usr/share/windows-binaries/pstools/PsExec*.exe /home/kali/toolswinall/  1>&2
+cp /usr/share/windows-binaries/pstools/PsExec64.exe /home/kali/wintools/ 1>&2
+echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Downloaded ${GREEN}PsExec.exe${RESET} ~ Pass The Hash 'phun'"
 
 
 ##### Install Python (Windows via WINE)
@@ -1080,7 +1086,7 @@ apt -y -qq install pure-ftpd 1>&2 \
 #--- Setup pure-ftpd
 mkdir -p /var/ftp/
 groupdel ftpgroup 2>/dev/null;
-groupadd ftpgroup
+groupadd ftpgroup 2>/dev/null
 userdel ftp 2>/dev/null;
 useradd -r -M -d /var/ftp/ -s /bin/false -c "FTP user" -g ftpgroup ftp
 chown -R ftp\:ftpgroup /var/ftp/
@@ -1104,8 +1110,10 @@ echo "FTP" > /etc/pure-ftpd/welcome.msg
 ln -sf /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure
 #---  MOTD
 echo "------ Kali Pure-ftp Server /var/ftp ----------"  > /etc/pure-ftpd/welcome.msg
+echo -e " ${YELLOW}[i]${RESET} Pure-FTPd command: service pure-ftpd start"
+echo -e " ${YELLOW}[i]${RESET} Pure-FTPd directory: /var/ftp"
 echo -e " ${YELLOW}[i]${RESET} Pure-FTPd username: anonymous"
-echo -e " ${YELLOW}[i]${RESET} Pure-FTPd password: anonymous"
+echo -e " ${YELLOW}[i]${RESET} Pure-FTPd password: <anything>"
 #--- Apply settings
 systemctl restart pure-ftpd 2>/dev/null
 #--- Remove from start up, and stop service 
@@ -1146,9 +1154,9 @@ grep -q '^\[shared\]' "${file}" 2>/dev/null \
   directory mask = 0777
 EOF
 #--- Create samba path and configure it
-mkdir -p /var/samba/
-chown -R samba\:smbgroup /var/samba/
-chmod -R 0777 /var/samba/
+mkdir -p /var/samba/ 2>/dev/null
+chown -R samba\:smbgroup /var/samba/ 2>/dev/null
+chmod -R 0777 /var/samba/ 2>/dev/null
 #--- Bug fix
 touch /etc/printcap
 #--- Check
@@ -1159,6 +1167,8 @@ mount -t cifs -o guest //127.0.0.1/share /mnt/smb
 #--- Disable samba at startup
 systemctl stop smbd
 systemctl disable smbd
+echo -e " ${YELLOW}[i]${RESET} Samba command: service smbd start"
+echo -e " ${YELLOW}[i]${RESET} Samba directory: /var/smb/"
 echo -e " ${YELLOW}[i]${RESET} Samba username: guest"
 echo -e " ${YELLOW}[i]${RESET} Samba password: <blank>"
 # #--- Setup alias
