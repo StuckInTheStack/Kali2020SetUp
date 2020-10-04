@@ -147,7 +147,7 @@ else
 fi
 
 
-##### Checking if there is at least 10Mb of space availale on the disk, feel free to change the limit if your modifications use less.
+##### Checking if there is at least 25/10Mb of space availale on the disk, feel free to change the limit if your modifications use less.
 if [[ "${NotEverything}" = "true" ]] ; then
 DiskNeeded="10000000";
 else
@@ -162,14 +162,53 @@ else
 fi
 
 
-##### Mounting my local host machine share that I can use for file transfers ( also can use github or other internet facing storage )  
-#   If you have some tools that have your own passwords or privately obfuscated tools, then I use
-#       a local file share to upload them into kali. This can be replaced with in internet facing private cloud, etc...
-#   It is preferable to load tools directly from the source so you're always getting the latest updated tool.
-(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Mounting host OS share onto /mnt/hgfs..."
-mkdir /mnt/hgfs 2>/dev/null 
-mount -t cifs //192.168.1.99/Shared /mnt/hgfs 1>&2 
-chmod -R 777 /mnt/hgfs
+##### Check Internet access
+(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Checking ${GREEN}Internet access${RESET}"
+#--- Can we ping google?
+for i in {1..10}; do ping -c 1 -W ${i} www.google.com &>/dev/null && break; done
+#--- Run this, if we can't
+if [[ "$?" -ne 0 ]]; then
+  echo -e ' '${RED}'[!]'${RESET}" ${RED}Possible DNS issues${RESET}(?)" 1>&2
+  echo -e ' '${RED}'[!]'${RESET}" Will try and use ${YELLOW}DHCP${RESET} to 'fix' the issue" 1>&2
+  chattr -i /etc/resolv.conf 2>/dev/null
+  dhclient -r
+  #--- Second interface causing issues?
+  ip addr show eth1 &>/dev/null
+  [[ "$?" == 0 ]] \
+    && route delete default gw 192.168.155.1 2>/dev/null
+  #--- Request a new IP
+  dhclient
+  dhclient eth0 2>/dev/null
+  dhclient wlan0 2>/dev/null
+  #--- Wait and see what happens
+  sleep 15s
+  _TMP="true"
+  _CMD="$(ping -c 1 8.8.8.8 &>/dev/null)"
+  if [[ "$?" -ne 0 && "$_TMP" == "true" ]]; then
+    _TMP="false"
+    echo -e ' '${RED}'[!]'${RESET}" ${RED}No Internet access${RESET}" 1>&2
+    echo -e ' '${RED}'[!]'${RESET}" You will need to manually fix the issue, before re-running this script" 1>&2
+  fi
+  _CMD="$(ping -c 1 www.google.com &>/dev/null)"
+  if [[ "$?" -ne 0 && "$_TMP" == "true" ]]; then
+    _TMP="false"
+    echo -e ' '${RED}'[!]'${RESET}" ${RED}Possible DNS issues${RESET}(?)" 1>&2
+    echo -e ' '${RED}'[!]'${RESET}" You will need to manually fix the issue, before re-running this script" 1>&2
+  fi
+  if [[ "$_TMP" == "false" ]]; then
+    (dmidecode | grep -iq virtual) && echo -e " ${YELLOW}[i]${RESET} VM Detected"
+    (dmidecode | grep -iq virtual) && echo -e " ${YELLOW}[i]${RESET} ${YELLOW}Try switching network adapter mode${RESET} (e.g. NAT/Bridged)"
+    echo -e ' '${RED}'[!]'${RESET}" Quitting..." 1>&2
+    exit 1
+  fi
+else
+  echo -e " ${YELLOW}[i]${RESET} ${YELLOW}Detected Internet access${RESET}" 1>&2
+fi
+
+
+##### Cpdating the cache
+(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Updating ${GREEN}the cache${RESET}"
+apt update 1>/dev/null
 
 
 ##### Making my own preset directories for my preset tools to be downloaded later ( and ssh keys )
@@ -185,66 +224,80 @@ chmod -R 777 /mnt/hgfs
 #   /Pictures/Wallpapers =gotta brand yourself
 #
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Creating tools directories and deleting unused directories..."
-mkdir /home/kali/.ssh 2>/dev/null
-mkdir /home/kali/linuxtools 2>/dev/null
-mkdir /home/kali/toolslinuxall  2>/dev/null
-mkdir /home/kali/wintools 2>/dev/null
-mkdir /home/kali/toolswinall  2>/dev/null
-mkdir /home/kali/shells 2>/dev/null
-mkdir /home/kali/lists  2>/dev/null
-mkdir /home/kali/logs  2>/dev/null
-mkdir /home/kali/Pictures/Wallpapers 2>/dev/null
-mkdir /home/kali/.local/bin 2>/dev/null
-mkdir /root/.ssh  2>/dev/null
+mkdir /home/kali/.ssh
+mkdir /home/kali/linuxtools
+mkdir /home/kali/toolslinuxall
+mkdir /home/kali/wintools
+mkdir /home/kali/toolswinall
+mkdir /home/kali/shells
+mkdir /home/kali/lists
+mkdir /home/kali/logs
+mkdir /home/kali/Pictures/Wallpapers
+mkdir /home/kali/.local/bin
+chown -R kali:kali /home/kali
+chmod +wr /home/kali/*  # required to allow root to write /home/kali/.cache
+mkdir /root/.ssh
 if [[ "${KeepDirs}" = "false" ]]; then
   echo "Removing Public, Templates, Vidoes, and Music home directories..."
-  rmdir /home/kali/Public 2>/dev/null
-  rmdir /home/kali/Templates 2>/dev/null
-  rmdir /home/kali/Videos 2>/dev/null
-  rmdir /home/kali/Music 2>/dev/null
-  rmdir /root/Public 2>/dev/null
-  rmdir /root/Templates 2>/dev/null
-  rmdir /root/Videos 2>/dev/null
-  rmdir /root/Music 2>/dev/null;
+  rmdir /home/kali/Public
+  rmdir /home/kali/Templates
+  rmdir /home/kali/Videos
+  rmdir /home/kali/Music
+  rmdir /root/Public
+  rmdir /root/Templates
+  rmdir /root/Videos
+  rmdir /root/Music;
 else
   echo "Keeping the Public, Templates, Vidoes, and Music home directories...";
 fi
 
 
+##### Mounting my local host machine share that I can use for file transfers ( also can use github or other internet facing storage )  
+#   If you have some tools that have your own passwords or privately obfuscated tools, then I use
+#       a local file share to upload them into kali. This can be replaced with in internet facing private cloud, etc...
+#   It is preferable to load tools directly from the source so you're always getting the latest updated tool.
+(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Mounting host OS share onto /mnt/hgfs..."
+mkdir /mnt/hgfs 2>/dev/null 
+mount -t cifs //192.168.1.99/Shared /mnt/hgfs -o user=kali,pass=kali 1>/dev/null
+chmod -R 777 /mnt/hgfs
+
+
 ##### Downloading my preset tools, lists, and wallpapers from the host OS share  
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Downloading local tools from localshare and internet..." 1>&2
 
-cp -r/mnt/hgfs/lists/* /home/kali/lists
-cp -r /mnt/hgfs/shells/* /home/kali/shells
-cp -r /mnt/hgfs/wallpapers/* /home/kali/Pictures/Wallpapers 
+cp -r /mnt/hgfs/lists/* /home/kali/lists 1>/dev/null 1>&2
+cp -r /mnt/hgfs/shells/* /home/kali/shells 1>&2 
+cp -r /mnt/hgfs/wallpapers/* /home/kali/Pictures/Wallpapers 1>&2 
 
-cp -r /mnt/hgfs/linuxtools/* /home/kali/linuxtools
-cp -r /mnt/hgfs/toolslinuxall/* /home/kali/toolslinuxall 
-cd /home/kali/linuxtools
-wget https://github.com/StuckInTheStack/Kali2020Setup/aliases    # copies over my aliases that I use on kali and linux hosts
-wget https://raw.githubusercontent.com/diego-treitos/linux-smart-enumeration/master/lse.sh
-wget https://raw.githubusercontent.com/carlospolop/privilege-escalation-awesome-scripts-suite/master/linPEAS/linpeas.sh
-wget https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh
-wget https://github.com/DominicBreuker/pspy/releases/download/v1.2.0/pspy32s 
-wget https://github.com/DominicBreuker/pspy/releases/download/v1.2.0/pspy64s 
-chmod +x *
+cp -r /mnt/hgfs/linuxtools/* /home/kali/linuxtools 1>&2 
+cp -r /mnt/hgfs/toolslinuxall/* /home/kali/toolslinuxall  1>&2 
+cd /home/kali/linuxtools 1>&2
+wget https://github.com/StuckInTheStack/Kali2020Setup/blob/master/aliases 1>&2    # copies over my aliases that I use on kali and linux hosts
+wget https://raw.githubusercontent.com/diego-treitos/linux-smart-enumeration/master/lse.sh 1>&2
+wget https://raw.githubusercontent.com/carlospolop/privilege-escalation-awesome-scripts-suite/master/linPEAS/linpeas.sh 1>&2
+wget https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh 1>&2
+wget https://github.com/DominicBreuker/pspy/releases/download/v1.2.0/pspy32s 1>&2 
+wget https://github.com/DominicBreuker/pspy/releases/download/v1.2.0/pspy64s 1>&2 
+chmod +x /home/kali/linuxtools /home/kali/toolslinuxall 1>&2  
 
-cp -r /mnt/hgfs/wintools/* /home/kali/wintools
-cp -r /mnt/hgfs/toolswinall/* /home/kali/toolswinall
-cd /home/kali/wintools/
+cp -r /mnt/hgfs/wintools/* /home/kali/wintools 1>&2
+cp -r /mnt/hgfs/toolswinall/* /home/kali/toolswinall 1>&2
+cd /home/kali/wintools/ 1>&2
 wget "https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite/blob/master/winPEAS/winPEASexe/winPEAS/bin/Obfuscated%20Releases/winPEASany.exe" 1>&2
-wget https://github.com/carlospolop/winPE/tree/master/binaries/watson/WatsonNet3.5AnyCPU.exe 
-wget https://github.com/carlospolop/winPE/tree/master/binaries/watson/WatsonNet4AnyCPU.exe 
-curl -LJ https://eternallybored.org/misc/wget/1.20/32/wget.exe > /home/kali/wintools/wget.exe 
-wget https://github.com/r3motecontrol/Ghostpack-CompiledBinaries/blob/master/Seatbelt.exe
-wget https://github.com/r3motecontrol/Ghostpack-CompiledBinaries/blob/master/SharpUp.exe
+wget https://github.com/carlospolop/winPE/tree/master/binaries/watson/WatsonNet3.5AnyCPU.exe 1>&2 
+wget https://github.com/carlospolop/winPE/tree/master/binaries/watson/WatsonNet4AnyCPU.exe 1>&2 
+curl -LJ https://eternallybored.org/misc/wget/1.20/32/wget.exe > /home/kali/wintools/wget.exe 1>&2 
+wget https://github.com/r3motecontrol/Ghostpack-CompiledBinaries/blob/master/Seatbelt.exe 1>&2
+wget https://github.com/r3motecontrol/Ghostpack-CompiledBinaries/blob/master/SharpUp.exe 1>&2
 
 
 ##### Downloading my aliases and scripts from the host OS share then adding aliases from this script
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Downloading tools from localshare then adding aliases from this script..." 1>&2
 file=/home/kali/.bash_aliases; [ -e "${file}" ] && cp -n $file{,.bkup}   #/etc/bash.bash_aliases
-cp -r /mnt/hgfs/.scripts/* /home/kali/.local/bin                         #copies my custom scripts to .local/bin to be in PATH
+cp -r /mnt/hgfs/.scripts/* /home/kali/.local/bin 1>&2       #copies my custom scripts to .local/bin to be in PATH
 export PATH=/home/kali/.local/bin:$PATH 
+echo 'export PATH=/home/kali/.local/bin:$PATH' >> /home/kali/.bashrc
+echo 'export PATH=/home/kali/.local/bin:$PATH' >> /root/.bashrc
 
 
 if [ ! -f "/home/kali/.bash_aliases" ]; then      # copy over my standard /linuxtools/aliases if no .bash_aliases
@@ -387,7 +440,6 @@ source /home/kali/.bash_aliases
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Setting wallpaper..."
 cd /home/kali/Pictures/Wallpaper
 wget https://raw.githubusercontent.com/StuckInTheStack/Kali2020SetUp/master/darkweavekali.jpg
-wget https://raw.githubusercontent.com/StuckInTheStack/Kali2020SetUp/master/darkwin10.jpg
 wget https://raw.githubusercontent.com/StuckInTheStack/Kali2020SetUp/master/darkwwoodkaliRitter.jpg
 xfconf-query --channel xfce4-desktop --property /backdrop/screen0/monitor0/image-path --set /home/kali/Pictures/Wallpaper/darkwoodkaliRitter.jpg 2>/dev/null
 
@@ -449,50 +501,6 @@ fi' >> ~/.bashrc
 ##### Fix display output for GUI programs (when connecting via SSH)
 export DISPLAY=:0.0
 export TERM=xterm-256
-
-
-##### Check Internet access
-(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Checking ${GREEN}Internet access${RESET}"
-#--- Can we ping google?
-for i in {1..10}; do ping -c 1 -W ${i} www.google.com &>/dev/null && break; done
-#--- Run this, if we can't
-if [[ "$?" -ne 0 ]]; then
-  echo -e ' '${RED}'[!]'${RESET}" ${RED}Possible DNS issues${RESET}(?)" 1>&2
-  echo -e ' '${RED}'[!]'${RESET}" Will try and use ${YELLOW}DHCP${RESET} to 'fix' the issue" 1>&2
-  chattr -i /etc/resolv.conf 2>/dev/null
-  dhclient -r
-  #--- Second interface causing issues?
-  ip addr show eth1 &>/dev/null
-  [[ "$?" == 0 ]] \
-    && route delete default gw 192.168.155.1 2>/dev/null
-  #--- Request a new IP
-  dhclient
-  dhclient eth0 2>/dev/null
-  dhclient wlan0 2>/dev/null
-  #--- Wait and see what happens
-  sleep 15s
-  _TMP="true"
-  _CMD="$(ping -c 1 8.8.8.8 &>/dev/null)"
-  if [[ "$?" -ne 0 && "$_TMP" == "true" ]]; then
-    _TMP="false"
-    echo -e ' '${RED}'[!]'${RESET}" ${RED}No Internet access${RESET}" 1>&2
-    echo -e ' '${RED}'[!]'${RESET}" You will need to manually fix the issue, before re-running this script" 1>&2
-  fi
-  _CMD="$(ping -c 1 www.google.com &>/dev/null)"
-  if [[ "$?" -ne 0 && "$_TMP" == "true" ]]; then
-    _TMP="false"
-    echo -e ' '${RED}'[!]'${RESET}" ${RED}Possible DNS issues${RESET}(?)" 1>&2
-    echo -e ' '${RED}'[!]'${RESET}" You will need to manually fix the issue, before re-running this script" 1>&2
-  fi
-  if [[ "$_TMP" == "false" ]]; then
-    (dmidecode | grep -iq virtual) && echo -e " ${YELLOW}[i]${RESET} VM Detected"
-    (dmidecode | grep -iq virtual) && echo -e " ${YELLOW}[i]${RESET} ${YELLOW}Try switching network adapter mode${RESET} (e.g. NAT/Bridged)"
-    echo -e ' '${RED}'[!]'${RESET}" Quitting..." 1>&2
-    exit 1
-  fi
-else
-  echo -e " ${YELLOW}[i]${RESET} ${YELLOW}Detected Internet access${RESET}" 1>&2
-fi
 
 
 ##### Enable default network repositories ~ http://docs.kali.org/general-use/kali-linux-sources-list-repositories
@@ -596,8 +604,8 @@ if [[ "${_TMP}" -gt 1 ]]; then
   if [[ -z "${TMP}" ]]; then
     echo -e '\n '${RED}'[!]'${RESET}' You are '${RED}'not using the latest kernel'${RESET} 1>&2
     echo -e " ${YELLOW}[i]${RESET} You have it ${YELLOW}downloaded${RESET} & installed, just ${YELLOW}not USING IT${RESET}"
-    #echo -e "\n ${YELLOW}[i]${RESET} You ${YELLOW}NEED to REBOOT${RESET}, before re-running this script"
-    #exit 1
+    echo -e "\n ${YELLOW}[i]${RESET} You ${YELLOW}NEED to run apt update && apt upgrade , and then REBOOT${RESET}, before re-running this script"
+    exit 1
     sleep 30s
   else
     echo -e " ${YELLOW}[i]${RESET} ${YELLOW}You're using the latest kernel${RESET} (Good to continue)"
@@ -612,8 +620,8 @@ apt -y -qq install make gcc "linux-headers-$(uname -r)"  1>&2 \
 if [[ $? -ne 0 ]]; then
   echo -e ' '${RED}'[!]'${RESET}" There was an ${RED}issue installing kernel headers${RESET}"
   echo -e " ${YELLOW}[i]${RESET} Are you ${YELLOW}USING${RESET} the ${YELLOW}latest kernel${RESET}?"
-  echo -e " ${YELLOW}[i]${RESET} ${YELLOW}Reboot${RESET} your machine"
-  #exit 1
+  echo -e " ${YELLOW}[i]${RESET} ${YELLOW}Run apt update && apt upgrade, and then Reboot${RESET} your machine"
+  exit 1
   sleep 30s
 fi
 
@@ -771,7 +779,7 @@ apt -y -qq install python3 1>&2  \
   || echo -e ' '${RED}'[!] Issue with apt install python3'${RESET} 1>&2
 apt -y -qq install python3-pip 1>&2  \
   || echo -e ' '${RED}'[!] Issue with apt install pip3'${RESET} 1>&2
-apt-get install python3-venv 1>&2  \
+apt -y -qq install python3-venv 1>&2  \
   || echo -e ' '${RED}'[!] Issue with apt install python3-venv'${RESET} 1>&2
 python3 -m pip install --user pipx 1>&2  \
   || echo -e ' '${RED}'[!] Issue with apt install pipx'${RESET} 1>&2
@@ -779,7 +787,7 @@ python3 -m pipx ensurepath 1>&2  \
   || echo -e ' '${RED}'[!] Issue with pipx ensurepath'${RESET} 1>&2
 echo Defaults	secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/kali/.local/bin" >> /etc/sudoers 1>&2  \
   || echo -e ' '${RED}'[!] Issue with /etc/sudoers secure_path update'${RESET} 1>&2
-apt install seclists curl enum4linux gobuster nbtscan nikto nmap onesixtyone oscanner smbclient smbmap smtp-user-enum snmp sslscan sipvicious tnscmd10g whatweb wkhtmltopdf 1>&2  \
+apt -y -qq install seclists curl enum4linux gobuster nbtscan nikto nmap onesixtyone oscanner smbclient smbmap smtp-user-enum snmp sslscan sipvicious tnscmd10g whatweb wkhtmltopdf 1>&2  \
   || echo -e ' '${RED}'[!] Issue with apt install requirements for AutoRecon'${RESET} 1>&2
 pipx install git+https://github.com/Tib3rius/AutoRecon.git 1>&2  \
   || echo -e ' '${RED}'[!] Issue with pipx install AutoRecon'${RESET} 1>&2
@@ -1049,7 +1057,7 @@ chmod +x "${file}"
 
 ##### Install pyftpdlib
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}pytftpdlib${RESET} ~ quick ftp server"
-apt-get install python3-pyftpdlib 1>&2 \
+apt -y -qq install python3-pyftpdlib 1>&2 \
   || echo -e ' '${RED}'[!] Issue with python3-pyftpdlib'${RESET} 1>&2
 pip3 install pyftpdlib \
   || echo -e ' '${RED}'[!] Issue with pip3 install pyftpdlib'${RESET} 1>&2
@@ -1211,7 +1219,7 @@ sed -i 's/\#AuthorizedKeysFile /AuthorizedKeysFile /g' "${file}"    # Allow for 
 #  || echo -e '## ssh\nalias ssh-start="systemctl restart ssh"\nalias ssh-stop="systemctl stop ssh"\n' >> "${file}"
 #--- Apply new alias
 #source "${file}" || source ~/.zshrc
-service sshd restart || echo -e " ${RED}[i] Problem restarting sshd service."
+service ssh restart || echo -e " ${RED}[i] Problem restarting sshd service."
 
 
 ##### Clean the system
