@@ -24,7 +24,7 @@ function me () { chmod +x $1;}
 
 alias  httpup='python -m SimpleHTTPServer '   # quick http server
 alias  ftpup='python3 -m pyftpdlib -w -p '         # quick ftp server 
-alias  smbup='python /opt/impacket/examples/smbserver.py -smb2support ' # quick smb share needs <name> and <path> after
+alias  smbup='python /usr/share/doc/python3-impacket/examples/smbserver.py -smb2support ' # quick smb share needs <name> and <path> after
 
 function rg() {
 if [ -z $1 ]; then 
